@@ -8,14 +8,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuración de la base de datos
-DB_CONFIG = {
-    'dbname': os.environ.get('DB_NAME', 'postgres'),
-    'user': os.environ.get('DB_USER', 'postgres'),
-    'password': os.environ.get('DB_PASSWORD'),
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'port': os.environ.get('DB_PORT', '5432'),
-    'sslmode': 'require'  # Supabase requiere SSL
-}
+# Opción 1: Usar DATABASE_URL si está disponible (formato de Supabase)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Usar connection string completa
+    DB_CONFIG = DATABASE_URL
+else:
+    # Usar configuración individual
+    DB_CONFIG = {
+        'dbname': os.environ.get('DB_NAME', 'postgres'),
+        'user': os.environ.get('DB_USER', 'postgres'),
+        'password': os.environ.get('DB_PASSWORD'),
+        'host': os.environ.get('DB_HOST', 'localhost'),
+        'port': os.environ.get('DB_PORT', '5432'),
+        'sslmode': 'require'  # Supabase requiere SSL
+    }
 
 # Configuración Flask
 FLASK_CONFIG = {

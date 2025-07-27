@@ -29,6 +29,7 @@ def main():
         # Mostrar variables de entorno para debug (sin mostrar passwords)
         env_vars = {
             'PORT': os.environ.get('PORT'),
+            'DATABASE_URL': '***' if os.environ.get('DATABASE_URL') else None,
             'DB_HOST': os.environ.get('DB_HOST'),
             'DB_NAME': os.environ.get('DB_NAME'),
             'DB_USER': os.environ.get('DB_USER'),

@@ -15,7 +15,12 @@ class DatabaseManager:
     def connect(self):
         """Conectar a la base de datos"""
         try:
-            conn = psycopg2.connect(**self.config)
+            # Si DB_CONFIG es una string (DATABASE_URL), usarla directamente
+            if isinstance(self.config, str):
+                conn = psycopg2.connect(self.config)
+            else:
+                # Si es un diccionario, usar parámetros individuales
+                conn = psycopg2.connect(**self.config)
             return conn
         except Exception as e:
             raise Exception(f"Error conectando a la base de datos: {e}")
