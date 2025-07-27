@@ -5,6 +5,8 @@ Arquitectura modular y limpia
 from flask import Flask, jsonify, request
 from churn_service import ChurnAnalysisService
 from config import FLASK_CONFIG
+import pandas as pd
+from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -20,10 +22,13 @@ churn_service = ChurnAnalysisService()
 def health_check():
     """Verificar el estado de la API"""
     try:
-        health_data = churn_service.health_check()
+        # Health check básico sin base de datos
         return jsonify({
             'success': True,
-            'data': health_data,
+            'status': 'healthy',
+            'service': 'Analytics API - Xumaa',
+            'version': '1.0.0',
+            'timestamp': pd.Timestamp.now().isoformat(),
             'message': 'API funcionando correctamente'
         })
     except Exception as e:

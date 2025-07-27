@@ -38,14 +38,25 @@ def test_environment_variables():
     try:
         from config import DB_CONFIG, FLASK_CONFIG
         print("📊 Configuración de base de datos:")
-        for key, value in DB_CONFIG.items():
-            display_value = "***HIDDEN***" if key == 'password' else value
-            print(f"  - {key}: {display_value}")
+        if isinstance(DB_CONFIG, str):
+            print(f"  - Usando DATABASE_URL: {DB_CONFIG[:50]}...")
+        else:
+            for key, value in DB_CONFIG.items():
+                display_value = "***HIDDEN***" if key == 'password' else value
+                print(f"  - {key}: {display_value}")
         
         print("\n🌐 Configuración de Flask:")
         for key, value in FLASK_CONFIG.items():
             display_value = "***HIDDEN***" if 'secret' in key.lower() else value
             print(f"  - {key}: {display_value}")
+            
+        print("\n💾 Configuración de BD:")
+        if isinstance(DB_CONFIG, str):
+            print(f"  - Usando DATABASE_URL: {DB_CONFIG[:50]}...")
+        else:
+            for key, value in DB_CONFIG.items():
+                display_value = "***HIDDEN***" if key == 'password' else value
+                print(f"  - {key}: {display_value}")
             
     except Exception as e:
         print(f"❌ Error cargando configuración: {e}")
