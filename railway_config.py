@@ -30,21 +30,28 @@ def get_railway_db_config():
     # Asegurar que usa el puerto 6543 (pooler)
     port = 6543 if parsed.port == 5432 else (parsed.port or 6543)
     
-    # Construir string de conexión optimizado para IPv6
+    # Construir string de conexión optimizado para IPv6 (solo parámetros válidos para psycopg2)
     optimized_url = (
         f"postgresql://{parsed.username}:{parsed.password}@"
         f"{parsed.hostname}:{port}{parsed.path}"
         f"?sslmode=require"
         f"&connect_timeout=60"
-        f"&statement_timeout=300000"
-        f"&idle_in_transaction_session_timeout=300000"
         f"&application_name=xumaa_analytics_railway"
-        f"&keepalives_idle=600"
-        f"&keepalives_interval=30"
-        f"&keepalives_count=3"
     )
     
-    return optimized_url
+    # Usar parámetros individuales (más compatible)
+    return {
+        'host': parsed.hostname,
+        'port': port,
+        'database': parsed.path.lstrip('/'),
+        'user': parsed.username,
+        'password': parsed.password,
+        'sslmode': 'require',
+        'connect_timeout': 60,
+        'application_name': 'xumaa_analytics_railway'
+    }
+    
+    # return optimized_url
 
 def test_railway_connection():
     """
