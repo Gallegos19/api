@@ -57,13 +57,28 @@ def main():
         try:
             from database import DatabaseManager
             db = DatabaseManager()
+            logger.info("🔌 Intentando conectar a base de datos...")
+            logger.info(f"   Host: {os.environ.get('DB_HOST')}")
+            logger.info(f"   Puerto: {os.environ.get('DB_PORT')}")
+            logger.info(f"   Base de datos: {os.environ.get('DB_NAME')}")
+            logger.info(f"   Usuario: {os.environ.get('DB_USER')}")
+            
             if db.test_connection():
                 logger.info("✅ Conexión a base de datos exitosa")
             else:
-                logger.error("❌ Error de conexión a base de datos")
+                logger.error("❌ Error de conexión a base de datos - test_connection retornó False")
+                # Intentar obtener más detalles del error
+                try:
+                    conn = db.connect()
+                    conn.close()
+                    logger.info("✅ Conexión directa exitosa")
+                except Exception as conn_error:
+                    logger.error(f"❌ Error de conexión directa: {conn_error}")
                 sys.exit(1)
         except Exception as db_error:
             logger.error(f"❌ Error probando base de datos: {db_error}")
+            import traceback
+            logger.error(f"📋 Traceback completo: {traceback.format_exc()}")
             sys.exit(1)
         
         # Iniciar aplicación
