@@ -1,11 +1,9 @@
 """
 API Principal de Análisis de Churn - Xumaa
-Arquitectura modular y limpia
+Versión simplificada para Vercel
 """
 from flask import Flask, jsonify, request
-from churn_service import ChurnAnalysisService
 from config import FLASK_CONFIG
-import pandas as pd
 from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
@@ -14,8 +12,7 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['SECRET_KEY'] = FLASK_CONFIG['secret_key']
 
-# Instancia global del servicio
-churn_service = ChurnAnalysisService()
+# Versión simplificada sin ChurnAnalysisService
 
 
 @app.route('/api/churn-analysis/health', methods=['GET'])
