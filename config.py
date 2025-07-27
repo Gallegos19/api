@@ -16,6 +16,14 @@ DB_CONFIG = {
     'port': os.environ.get('DB_PORT', '5432')
 }
 
+# Configuración Flask
+FLASK_CONFIG = {
+    'debug': os.environ.get('FLASK_DEBUG', 'false').lower() == 'true',
+    'secret_key': os.environ.get('SECRET_KEY', 'dev-secret-key'),
+    'host': os.environ.get('HOST', '0.0.0.0'),
+    'port': int(os.environ.get('PORT', '8000'))
+}
+
 # Configuración del modelo
 MODEL_CONFIG = {
     'n_estimators': int(os.environ.get('MODEL_N_ESTIMATORS', '50')),

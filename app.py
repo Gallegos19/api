@@ -4,11 +4,13 @@ Arquitectura modular y limpia
 """
 from flask import Flask, jsonify, request
 from churn_service import ChurnAnalysisService
+from config import FLASK_CONFIG
 import warnings
 warnings.filterwarnings('ignore')
 
 # Crear aplicación Flask
 app = Flask(__name__)
+app.config['SECRET_KEY'] = FLASK_CONFIG['secret_key']
 
 # Instancia global del servicio
 churn_service = ChurnAnalysisService()
@@ -210,13 +212,12 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
-    import os
+    # Usar configuración de Railway
+    debug_mode = FLASK_CONFIG['debug']
+    host = FLASK_CONFIG['host']
+    port = FLASK_CONFIG['port']
     
-    # Configuración para producción vs desarrollo
-    is_production = os.environ.get('FLASK_ENV') == 'production'
-    port = int(os.environ.get('PORT', 5001))
-    
-    if not is_production:
+    if debug_mode:
         print("🚀 Iniciando API de Análisis de Churn - Xumaa")
         print("📡 Endpoints disponibles:")
         print("   GET  /api/churn-analysis/health")
@@ -226,6 +227,6 @@ if __name__ == '__main__':
         print("   GET  /api/churn-analysis/recommendations")
         print("   GET  /api/churn-analysis/detailed-report")
         print("   GET  /api/churn-analysis/status")
-        print(f"🌐 Servidor ejecutándose en: http://localhost:{port}")
+        print(f"🌐 Servidor ejecutándose en: {host}:{port}")
     
-    app.run(debug=not is_production, host='0.0.0.0', port=port)
+    app.run(debug=debug_mode, host=host, port=port)
