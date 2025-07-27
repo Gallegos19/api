@@ -104,41 +104,26 @@ def full_churn_analysis():
     
     try:
         print("🔄 [ENDPOINT] Iniciando análisis completo...")
-        # Agregar timeout y manejo de errores más robusto
-        import signal
         
-        def timeout_handler(signum, frame):
-            raise TimeoutError("Análisis tardó demasiado tiempo")
+        # Ejecutar análisis sin timeout por ahora
+        results = churn_service.run_complete_analysis()
+        print("✅ [ENDPOINT] Análisis completado")
         
-        # Configurar timeout de 30 segundos
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(30)
-        
-        try:
-            results = churn_service.run_complete_analysis()
-            signal.alarm(0)  # Cancelar timeout
-            
-            if results and results.get('success'):
-                return jsonify({
-                    'success': True,
-                    'data': results['data'],
-                    'service_type': SERVICE_TYPE,
-                    'message': f'Análisis de churn completado exitosamente ({SERVICE_TYPE} service)'
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': results.get('error', 'Error desconocido') if results else 'No se obtuvieron resultados',
-                    'message': results.get('message', 'Error durante el análisis') if results else 'Error durante el análisis'
-                }), 500
-                
-        except TimeoutError:
-            signal.alarm(0)
+        if results and results.get('success'):
+            print("✅ [ENDPOINT] Resultados exitosos")
+            return jsonify({
+                'success': True,
+                'data': results['data'],
+                'service_type': SERVICE_TYPE,
+                'message': f'Análisis de churn completado exitosamente ({SERVICE_TYPE} service)'
+            })
+        else:
+            print(f"❌ [ENDPOINT] Resultados fallidos: {results}")
             return jsonify({
                 'success': False,
-                'error': 'Timeout',
-                'message': 'El análisis tardó demasiado tiempo. Intente nuevamente.'
-            }), 504
+                'error': results.get('error', 'Error desconocido') if results else 'No se obtuvieron resultados',
+                'message': results.get('message', 'Error durante el análisis') if results else 'Error durante el análisis'
+            }), 500
             
     except Exception as e:
         return jsonify({
