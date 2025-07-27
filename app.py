@@ -1,10 +1,10 @@
 """
 API Principal de Análisis de Churn - Xumaa
-Versión simplificada para Vercel
 """
 from flask import Flask, jsonify, request
 from config import FLASK_CONFIG
 from datetime import datetime
+import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -12,20 +12,29 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['SECRET_KEY'] = FLASK_CONFIG['secret_key']
 
-# Versión simplificada sin ChurnAnalysisService
+# Importar el servicio de churn
+try:
+    from churn_service import ChurnAnalysisService
+    churn_service = ChurnAnalysisService()
+    SERVICE_AVAILABLE = True
+except Exception as e:
+    print(f"⚠️ Warning: ChurnAnalysisService no disponible: {e}")
+    churn_service = None
+    SERVICE_AVAILABLE = False
 
 
 @app.route('/api/churn-analysis/health', methods=['GET'])
 def health_check():
     """Verificar el estado de la API"""
     try:
-        # Health check básico sin base de datos
         return jsonify({
             'success': True,
             'status': 'healthy',
             'service': 'Analytics API - Xumaa',
             'version': '1.0.0',
             'timestamp': pd.Timestamp.now().isoformat(),
+            'churn_service_available': SERVICE_AVAILABLE,
+            'database_connected': SERVICE_AVAILABLE,
             'message': 'API funcionando correctamente'
         })
     except Exception as e:
@@ -42,6 +51,13 @@ def full_churn_analysis():
     Endpoint principal que ejecuta el análisis completo de churn
     Retorna: JSON con resultados + imágenes en base64
     """
+    if not SERVICE_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': 'Servicio no disponible',
+            'message': 'El servicio de análisis de churn no está disponible. Verifique la conexión a la base de datos.'
+        }), 503
+    
     try:
         results = churn_service.run_complete_analysis()
         
@@ -69,6 +85,13 @@ def full_churn_analysis():
 @app.route('/api/churn-analysis/predictions', methods=['GET'])
 def get_predictions():
     """Obtener predicciones de usuarios de alto riesgo"""
+    if not SERVICE_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': 'Servicio no disponible',
+            'message': 'El servicio de análisis de churn no está disponible. Verifique la conexión a la base de datos.'
+        }), 503
+    
     try:
         predictions_data = churn_service.get_high_risk_predictions()
         
@@ -89,6 +112,13 @@ def get_predictions():
 @app.route('/api/churn-analysis/visualizations', methods=['GET'])
 def get_visualizations():
     """Obtener visualizaciones como imágenes en base64"""
+    if not SERVICE_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': 'Servicio no disponible',
+            'message': 'El servicio de análisis de churn no está disponible. Verifique la conexión a la base de datos.'
+        }), 503
+    
     try:
         visualizations = churn_service.get_visualizations_only()
         
@@ -111,6 +141,13 @@ def get_visualizations():
 @app.route('/api/churn-analysis/recommendations', methods=['GET'])
 def get_recommendations():
     """Obtener recomendaciones de intervención"""
+    if not SERVICE_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': 'Servicio no disponible',
+            'message': 'El servicio de análisis de churn no está disponible. Verifique la conexión a la base de datos.'
+        }), 503
+    
     try:
         recommendations_data = churn_service.get_recommendations_only()
         
@@ -133,6 +170,13 @@ def get_detailed_report():
     """
     Obtener reporte detallado con los 5 usuarios de la gráfica y resumen completo
     """
+    if not SERVICE_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': 'Servicio no disponible',
+            'message': 'El servicio de análisis de churn no está disponible. Verifique la conexión a la base de datos.'
+        }), 503
+    
     try:
         detailed_data = churn_service.get_detailed_report()
         
@@ -154,11 +198,20 @@ def get_detailed_report():
 def get_status():
     """Obtener estado detallado del servicio"""
     try:
-        status = churn_service.health_check()
+        if SERVICE_AVAILABLE:
+            status = churn_service.health_check()
+        else:
+            status = {
+                'status': 'degraded',
+                'database': 'disconnected',
+                'model_trained': False,
+                'future_model_trained': False
+            }
         
         # Información adicional sobre el estado
         status_info = {
             **status,
+            'service_available': SERVICE_AVAILABLE,
             'endpoints': {
                 'health': '/api/churn-analysis/health',
                 'full_analysis': '/api/churn-analysis/full-analysis',
