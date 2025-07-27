@@ -12,26 +12,52 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['SECRET_KEY'] = FLASK_CONFIG['secret_key']
 
-# Importar el servicio de churn
+# Importar el servicio de churn con logging detallado
+print("🔄 Iniciando carga de servicios de churn...")
+
 try:
+    print("🔄 Intentando cargar ChurnAnalysisService completo...")
     from churn_service import ChurnAnalysisService
+    print("✅ Módulo churn_service importado")
+    
+    print("🔄 Inicializando ChurnAnalysisService...")
     churn_service = ChurnAnalysisService()
+    print("✅ ChurnAnalysisService inicializado")
+    
     SERVICE_AVAILABLE = True
     SERVICE_TYPE = "full"
-    print("✅ ChurnAnalysisService completo cargado")
+    print("✅ ChurnAnalysisService completo cargado exitosamente")
+    
 except Exception as e:
-    print(f"⚠️ Warning: ChurnAnalysisService completo no disponible: {e}")
+    print(f"⚠️ Warning: ChurnAnalysisService completo falló: {e}")
+    print(f"📋 Tipo de error: {type(e).__name__}")
+    import traceback
+    print(f"📋 Traceback: {traceback.format_exc()}")
+    
     try:
+        print("🔄 Intentando cargar ChurnAnalysisServiceSimple...")
         from churn_service_simple import ChurnAnalysisServiceSimple
+        print("✅ Módulo churn_service_simple importado")
+        
+        print("🔄 Inicializando ChurnAnalysisServiceSimple...")
         churn_service = ChurnAnalysisServiceSimple()
+        print("✅ ChurnAnalysisServiceSimple inicializado")
+        
         SERVICE_AVAILABLE = True
         SERVICE_TYPE = "demo"
-        print("✅ ChurnAnalysisService demo cargado")
+        print("✅ ChurnAnalysisService demo cargado exitosamente")
+        
     except Exception as e2:
-        print(f"❌ Error: Ningún servicio de churn disponible: {e2}")
+        print(f"❌ Error: ChurnAnalysisServiceSimple también falló: {e2}")
+        print(f"📋 Tipo de error: {type(e2).__name__}")
+        print(f"📋 Traceback: {traceback.format_exc()}")
+        
         churn_service = None
         SERVICE_AVAILABLE = False
         SERVICE_TYPE = "none"
+        print("❌ Ningún servicio de churn disponible")
+
+print(f"🎯 Estado final: SERVICE_AVAILABLE={SERVICE_AVAILABLE}, SERVICE_TYPE={SERVICE_TYPE}")
 
 
 @app.route('/api/churn-analysis/health', methods=['GET'])
@@ -64,7 +90,12 @@ def full_churn_analysis():
     Endpoint principal que ejecuta el análisis completo de churn
     Retorna: JSON con resultados + imágenes en base64
     """
+    print("🔄 [ENDPOINT] full-analysis: Request recibida")
+    print(f"🔄 [ENDPOINT] SERVICE_AVAILABLE: {SERVICE_AVAILABLE}")
+    print(f"🔄 [ENDPOINT] SERVICE_TYPE: {SERVICE_TYPE}")
+    
     if not SERVICE_AVAILABLE:
+        print("❌ [ENDPOINT] Servicio no disponible")
         return jsonify({
             'success': False,
             'error': 'Servicio no disponible',
@@ -72,32 +103,58 @@ def full_churn_analysis():
         }), 503
     
     try:
-        results = churn_service.run_complete_analysis()
+        print("🔄 [ENDPOINT] Iniciando análisis completo...")
+        # Agregar timeout y manejo de errores más robusto
+        import signal
         
-        if results['success']:
-            return jsonify({
-                'success': True,
-                'data': results['data'],
-                'message': 'Análisis de churn completado exitosamente'
-            })
-        else:
+        def timeout_handler(signum, frame):
+            raise TimeoutError("Análisis tardó demasiado tiempo")
+        
+        # Configurar timeout de 30 segundos
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(30)
+        
+        try:
+            results = churn_service.run_complete_analysis()
+            signal.alarm(0)  # Cancelar timeout
+            
+            if results and results.get('success'):
+                return jsonify({
+                    'success': True,
+                    'data': results['data'],
+                    'service_type': SERVICE_TYPE,
+                    'message': f'Análisis de churn completado exitosamente ({SERVICE_TYPE} service)'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': results.get('error', 'Error desconocido') if results else 'No se obtuvieron resultados',
+                    'message': results.get('message', 'Error durante el análisis') if results else 'Error durante el análisis'
+                }), 500
+                
+        except TimeoutError:
+            signal.alarm(0)
             return jsonify({
                 'success': False,
-                'error': results['error'],
-                'message': results['message']
-            }), 500
+                'error': 'Timeout',
+                'message': 'El análisis tardó demasiado tiempo. Intente nuevamente.'
+            }), 504
             
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e),
-            'message': 'Error durante el análisis de churn'
+            'service_type': SERVICE_TYPE,
+            'message': f'Error durante el análisis de churn: {str(e)}'
         }), 500
 
 
 @app.route('/api/churn-analysis/predictions', methods=['GET'])
 def get_predictions():
     """Obtener predicciones de usuarios de alto riesgo"""
+    print("🔄 [ENDPOINT] predictions: Request recibida")
+    print(f"🔄 [ENDPOINT] SERVICE_AVAILABLE: {SERVICE_AVAILABLE}")
+    
     if not SERVICE_AVAILABLE:
         return jsonify({
             'success': False,
@@ -125,6 +182,9 @@ def get_predictions():
 @app.route('/api/churn-analysis/visualizations', methods=['GET'])
 def get_visualizations():
     """Obtener visualizaciones como imágenes en base64"""
+    print("🔄 [ENDPOINT] visualizations: Request recibida")
+    print(f"🔄 [ENDPOINT] SERVICE_AVAILABLE: {SERVICE_AVAILABLE}")
+    
     if not SERVICE_AVAILABLE:
         return jsonify({
             'success': False,
