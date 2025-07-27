@@ -44,43 +44,44 @@ def main():
             status = "✅" if value else "❌"
             logger.info(f"   {status} {key}: {value}")
         
-        # Verificar variables de entorno críticas
-        required_vars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST']
-        missing_vars = [var for var in required_vars if not os.environ.get(var)]
+        # Verificar si está en modo demo (sin base de datos)
+        demo_mode = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
         
-        if missing_vars:
-            logger.error(f"❌ Variables de entorno faltantes: {missing_vars}")
-            sys.exit(1)
-        
-        logger.info("✅ Variables de entorno configuradas correctamente")
-        
-        # Probar conexión a base de datos
-        try:
-            from database import DatabaseManager
-            db = DatabaseManager()
-            logger.info("🔌 Intentando conectar a base de datos...")
-            logger.info(f"   Host: {os.environ.get('DB_HOST')}")
-            logger.info(f"   Puerto: {os.environ.get('DB_PORT')}")
-            logger.info(f"   Base de datos: {os.environ.get('DB_NAME')}")
-            logger.info(f"   Usuario: {os.environ.get('DB_USER')}")
+        if demo_mode:
+            logger.info("🎭 Iniciando en MODO DEMO (sin base de datos)")
+        else:
+            # Verificar variables de entorno críticas
+            required_vars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST']
+            missing_vars = [var for var in required_vars if not os.environ.get(var) and not os.environ.get('DATABASE_URL')]
             
-            if db.test_connection():
-                logger.info("✅ Conexión a base de datos exitosa")
-            else:
-                logger.error("❌ Error de conexión a base de datos - test_connection retornó False")
-                # Intentar obtener más detalles del error
-                try:
-                    conn = db.connect()
-                    conn.close()
-                    logger.info("✅ Conexión directa exitosa")
-                except Exception as conn_error:
-                    logger.error(f"❌ Error de conexión directa: {conn_error}")
+            if missing_vars and not os.environ.get('DATABASE_URL'):
+                logger.error(f"❌ Variables de entorno faltantes: {missing_vars}")
+                logger.info("💡 Tip: Agrega DEMO_MODE=true para ejecutar sin base de datos")
                 sys.exit(1)
-        except Exception as db_error:
-            logger.error(f"❌ Error probando base de datos: {db_error}")
-            import traceback
-            logger.error(f"📋 Traceback completo: {traceback.format_exc()}")
-            sys.exit(1)
+            
+            logger.info("✅ Variables de entorno configuradas correctamente")
+            
+            # Probar conexión a base de datos
+            try:
+                from database import DatabaseManager
+                db = DatabaseManager()
+                logger.info("🔌 Intentando conectar a base de datos...")
+                logger.info(f"   Host: {os.environ.get('DB_HOST')}")
+                logger.info(f"   Puerto: {os.environ.get('DB_PORT')}")
+                logger.info(f"   Base de datos: {os.environ.get('DB_NAME')}")
+                logger.info(f"   Usuario: {os.environ.get('DB_USER')}")
+                
+                if db.test_connection():
+                    logger.info("✅ Conexión a base de datos exitosa")
+                else:
+                    logger.warning("⚠️ No se pudo conectar a la base de datos")
+                    logger.warning("🔄 Continuando en modo degradado...")
+                    # No salir, continuar sin base de datos
+                    
+            except Exception as db_error:
+                logger.warning(f"⚠️ Error probando base de datos: {db_error}")
+                logger.warning("🔄 Continuando en modo degradado sin base de datos...")
+                # No salir, continuar sin base de datos
         
         # Iniciar aplicación
         logger.info("🎯 Iniciando servidor Flask...")

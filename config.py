@@ -12,8 +12,11 @@ load_dotenv()
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
-    # Usar connection string completa
-    DB_CONFIG = DATABASE_URL
+    # Agregar parámetros adicionales para forzar IPv4 y SSL
+    if '?' in DATABASE_URL:
+        DB_CONFIG = f"{DATABASE_URL}&sslmode=require&connect_timeout=30"
+    else:
+        DB_CONFIG = f"{DATABASE_URL}?sslmode=require&connect_timeout=30"
 else:
     # Usar configuración individual
     DB_CONFIG = {
@@ -22,7 +25,9 @@ else:
         'password': os.environ.get('DB_PASSWORD'),
         'host': os.environ.get('DB_HOST', 'localhost'),
         'port': os.environ.get('DB_PORT', '5432'),
-        'sslmode': 'require'  # Supabase requiere SSL
+        'sslmode': 'require',  # Supabase requiere SSL
+        'connect_timeout': 30,  # Timeout de conexión
+        'application_name': 'xumaa_analytics_railway'  # Identificar la aplicación
     }
 
 # Configuración Flask

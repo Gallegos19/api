@@ -86,6 +86,8 @@ class ChurnAnalysisService:
             'message': 'Datos extraídos exitosamente'
         })
     
+
+    
     def _process_data(self):
         """Paso 2: Procesar y preparar datos"""
         # Intentar definición realista de churn
