@@ -7,35 +7,36 @@ from dotenv import load_dotenv
 # Cargar variables de entorno
 load_dotenv()
 
-# Configuración de la base de datos
-# Intentar primero con connection pooling (puerto 6543), luego directo (5432)
-DATABASE_URL_POOLED = os.environ.get('DATABASE_URL_POOLED')
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Configuración de la base de datos optimizada para Railway + Supabase IPv6
+# Detectar si estamos en Railway
+IS_RAILWAY = os.environ.get('RAILWAY_ENVIRONMENT') is not None or os.environ.get('PORT') is not None
 
-if DATABASE_URL_POOLED:
-    # Usar connection pooling (recomendado para Railway)
-    if '?' in DATABASE_URL_POOLED:
-        DB_CONFIG = f"{DATABASE_URL_POOLED}&sslmode=require&connect_timeout=30&target_session_attrs=read-write"
-    else:
-        DB_CONFIG = f"{DATABASE_URL_POOLED}?sslmode=require&connect_timeout=30&target_session_attrs=read-write"
-elif DATABASE_URL:
-    # Usar conexión directa como fallback
-    if '?' in DATABASE_URL:
-        DB_CONFIG = f"{DATABASE_URL}&sslmode=require&connect_timeout=30&target_session_attrs=read-write"
-    else:
-        DB_CONFIG = f"{DATABASE_URL}?sslmode=require&connect_timeout=30&target_session_attrs=read-write"
+if IS_RAILWAY:
+    # Usar configuración optimizada para Railway
+    from railway_config import get_railway_db_config
+    DB_CONFIG = get_railway_db_config()
 else:
-    # Usar configuración individual
-    DB_CONFIG = {
-        'dbname': os.environ.get('DB_NAME', 'postgres'),
-        'user': os.environ.get('DB_USER', 'postgres'),
-        'password': os.environ.get('DB_PASSWORD'),
-        'host': os.environ.get('DB_HOST', 'localhost'),
-        'port': os.environ.get('DB_PORT', '5432'),
-        'sslmode': 'require',  # Supabase requiere SSL
-        'connect_timeout': 30,  # Timeout de conexión
-        'application_name': 'xumaa_analytics_railway'  # Identificar la aplicación
-    }
+    # Configuración local/desarrollo
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    
+    if DATABASE_URL:
+        # Usar DATABASE_URL con parámetros optimizados
+        if '?' in DATABASE_URL:
+            DB_CONFIG = f"{DATABASE_URL}&sslmode=require&connect_timeout=30"
+        else:
+            DB_CONFIG = f"{DATABASE_URL}?sslmode=require&connect_timeout=30"
+    else:
+        # Usar configuración individual
+        DB_CONFIG = {
+            'dbname': os.environ.get('DB_NAME', 'postgres'),
+            'user': os.environ.get('DB_USER', 'postgres'),
+            'password': os.environ.get('DB_PASSWORD'),
+            'host': os.environ.get('DB_HOST', 'localhost'),
+            'port': int(os.environ.get('DB_PORT', '5432')),
+            'sslmode': 'require',
+            'connect_timeout': 30,
+            'application_name': 'xumaa_analytics_local'
+        }
 
 # Configuración Flask
 FLASK_CONFIG = {

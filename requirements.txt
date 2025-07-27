@@ -9,3 +9,4 @@ seaborn==0.12.2
 plotly==5.15.0
 sqlalchemy==2.0.19
 gunicorn==21.2.0
+asyncpg==0.28.0

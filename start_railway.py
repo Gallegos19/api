@@ -61,25 +61,71 @@ def main():
             
             logger.info("✅ Variables de entorno configuradas correctamente")
             
-            # Probar conexión a base de datos
+            # Probar conexión a base de datos con diagnóstico detallado
             try:
                 from database import DatabaseManager
-                db = DatabaseManager()
+                from config import DB_CONFIG
+                
                 logger.info("🔌 Intentando conectar a base de datos...")
                 logger.info(f"   Host: {os.environ.get('DB_HOST')}")
                 logger.info(f"   Puerto: {os.environ.get('DB_PORT')}")
                 logger.info(f"   Base de datos: {os.environ.get('DB_NAME')}")
                 logger.info(f"   Usuario: {os.environ.get('DB_USER')}")
                 
-                if db.test_connection():
-                    logger.info("✅ Conexión a base de datos exitosa")
+                # Mostrar el tipo de configuración que se está usando
+                if isinstance(DB_CONFIG, str):
+                    logger.info(f"   Tipo de conexión: DATABASE_URL string")
+                    # Mostrar la URL sin la contraseña
+                    safe_url = DB_CONFIG.replace(os.environ.get('DB_PASSWORD', ''), '***')
+                    logger.info(f"   URL (segura): {safe_url}")
                 else:
-                    logger.warning("⚠️ No se pudo conectar a la base de datos")
-                    logger.warning("🔄 Continuando en modo degradado...")
-                    # No salir, continuar sin base de datos
+                    logger.info(f"   Tipo de conexión: Parámetros individuales")
+                    logger.info(f"   SSL Mode: {DB_CONFIG.get('sslmode', 'no especificado')}")
+                
+                db = DatabaseManager()
+                
+                # Intentar conexión con más detalles del error
+                try:
+                    conn = db.connect()
+                    if conn:
+                        # Probar una consulta simple
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT 1;")
+                        result = cursor.fetchone()
+                        cursor.close()
+                        conn.close()
+                        
+                        if result and result[0] == 1:
+                            logger.info("✅ Conexión a base de datos exitosa")
+                        else:
+                            logger.warning("⚠️ Conexión establecida pero consulta falló")
+                            logger.warning("🔄 Continuando en modo degradado...")
+                    else:
+                        logger.warning("⚠️ No se pudo establecer conexión")
+                        logger.warning("🔄 Continuando en modo degradado...")
+                        
+                except Exception as conn_error:
+                    logger.error(f"❌ Error específico de conexión: {conn_error}")
+                    logger.error(f"   Tipo de error: {type(conn_error).__name__}")
+                    
+                    # Diagnóstico específico para errores comunes
+                    error_str = str(conn_error).lower()
+                    if 'timeout' in error_str:
+                        logger.error("💡 Diagnóstico: Timeout de conexión - posible problema de red o IPv6")
+                    elif 'connection refused' in error_str:
+                        logger.error("💡 Diagnóstico: Conexión rechazada - verificar host y puerto")
+                    elif 'authentication failed' in error_str:
+                        logger.error("💡 Diagnóstico: Fallo de autenticación - verificar usuario/contraseña")
+                    elif 'ssl' in error_str:
+                        logger.error("💡 Diagnóstico: Problema SSL - verificar configuración SSL")
+                    elif 'name resolution' in error_str or 'getaddrinfo' in error_str:
+                        logger.error("💡 Diagnóstico: Problema de resolución DNS - posible problema IPv6")
+                    
+                    logger.warning("🔄 Continuando en modo degradado sin base de datos...")
                     
             except Exception as db_error:
-                logger.warning(f"⚠️ Error probando base de datos: {db_error}")
+                logger.error(f"❌ Error general probando base de datos: {db_error}")
+                logger.error(f"   Tipo de error: {type(db_error).__name__}")
                 logger.warning("🔄 Continuando en modo degradado sin base de datos...")
                 # No salir, continuar sin base de datos
         
