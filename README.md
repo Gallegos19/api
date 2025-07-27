@@ -52,7 +52,7 @@ DB_NAME=postgres
 DB_USER=postgres
 DB_PASSWORD=tu_password
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=6543
 
 # Configuración opcional del modelo
 MODEL_N_ESTIMATORS=50

@@ -14,7 +14,7 @@ DB_NAME=tu_db_name
 DB_USER=tu_db_user  
 DB_PASSWORD=tu_db_password
 DB_HOST=tu_db_host
-DB_PORT=5432
+DB_PORT=6543
 
 # Aplicación
 FLASK_ENV=production

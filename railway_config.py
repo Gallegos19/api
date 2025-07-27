@@ -28,7 +28,7 @@ def get_railway_db_config():
     parsed = urlparse(database_url)
     
     # CAMBIO: Usar puerto 5432 (directo) para evitar IPv6 del pooler
-    port = 5432
+    port = 6543
     
     # Construir string de conexión optimizado para IPv6 (solo parámetros válidos para psycopg2)
     optimized_url = (

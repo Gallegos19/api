@@ -34,7 +34,7 @@ def test_supabase_connection():
     try:
         conn = psycopg2.connect(
             host="db.qcysdkgbewyrdrtdjekc.supabase.co",
-            port=5432,
+            port=6543,
             database="postgres",
             user="postgres",
             password="2axRmYdLPUdsA7AO",

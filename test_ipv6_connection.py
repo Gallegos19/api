@@ -14,7 +14,7 @@ def test_connection_methods():
     
     # Método 1: DATABASE_URL con pooler (puerto 6543)
     database_url = os.environ.get('DATABASE_URL')
-    if database_url and ':5432/' in database_url:
+    if database_url and ':6543/' in database_url:
         database_url_pooled = database_url.replace(':5432/', ':6543/')
     else:
         database_url_pooled = database_url
@@ -83,7 +83,7 @@ def test_connection_methods():
     try:
         conn = psycopg2.connect(
             host=os.environ.get('DB_HOST'),
-            port=5432,
+            port=6543,
             database=os.environ.get('DB_NAME'),
             user=os.environ.get('DB_USER'),
             password=os.environ.get('DB_PASSWORD'),
