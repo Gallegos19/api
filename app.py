@@ -17,10 +17,21 @@ try:
     from churn_service import ChurnAnalysisService
     churn_service = ChurnAnalysisService()
     SERVICE_AVAILABLE = True
+    SERVICE_TYPE = "full"
+    print("✅ ChurnAnalysisService completo cargado")
 except Exception as e:
-    print(f"⚠️ Warning: ChurnAnalysisService no disponible: {e}")
-    churn_service = None
-    SERVICE_AVAILABLE = False
+    print(f"⚠️ Warning: ChurnAnalysisService completo no disponible: {e}")
+    try:
+        from churn_service_simple import ChurnAnalysisServiceSimple
+        churn_service = ChurnAnalysisServiceSimple()
+        SERVICE_AVAILABLE = True
+        SERVICE_TYPE = "demo"
+        print("✅ ChurnAnalysisService demo cargado")
+    except Exception as e2:
+        print(f"❌ Error: Ningún servicio de churn disponible: {e2}")
+        churn_service = None
+        SERVICE_AVAILABLE = False
+        SERVICE_TYPE = "none"
 
 
 @app.route('/api/churn-analysis/health', methods=['GET'])
@@ -34,8 +45,10 @@ def health_check():
             'version': '1.0.0',
             'timestamp': pd.Timestamp.now().isoformat(),
             'churn_service_available': SERVICE_AVAILABLE,
-            'database_connected': SERVICE_AVAILABLE,
-            'message': 'API funcionando correctamente'
+            'service_type': SERVICE_TYPE,
+            'database_connected': SERVICE_AVAILABLE and SERVICE_TYPE == "full",
+            'demo_mode': SERVICE_TYPE == "demo",
+            'message': f'API funcionando correctamente ({SERVICE_TYPE} service)'
         })
     except Exception as e:
         return jsonify({
