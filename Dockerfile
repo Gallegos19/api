@@ -29,5 +29,5 @@ ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app
 
-# Comando para ejecutar la aplicación con Gunicorn
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]
+# Comando para ejecutar la aplicación
+CMD ["python", "start_railway.py"]
