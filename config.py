@@ -8,11 +8,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuración de la base de datos
-# Opción 1: Usar DATABASE_URL si está disponible (formato de Supabase)
+# Intentar primero con connection pooling (puerto 6543), luego directo (5432)
+DATABASE_URL_POOLED = os.environ.get('DATABASE_URL_POOLED')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-if DATABASE_URL:
-    # Agregar parámetros adicionales para forzar IPv4 y SSL
+if DATABASE_URL_POOLED:
+    # Usar connection pooling (recomendado para Railway)
+    if '?' in DATABASE_URL_POOLED:
+        DB_CONFIG = f"{DATABASE_URL_POOLED}&sslmode=require&connect_timeout=30"
+    else:
+        DB_CONFIG = f"{DATABASE_URL_POOLED}?sslmode=require&connect_timeout=30"
+elif DATABASE_URL:
+    # Usar conexión directa como fallback
     if '?' in DATABASE_URL:
         DB_CONFIG = f"{DATABASE_URL}&sslmode=require&connect_timeout=30"
     else:
