@@ -15,15 +15,15 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL_POOLED:
     # Usar connection pooling (recomendado para Railway)
     if '?' in DATABASE_URL_POOLED:
-        DB_CONFIG = f"{DATABASE_URL_POOLED}&sslmode=require&connect_timeout=30"
+        DB_CONFIG = f"{DATABASE_URL_POOLED}&sslmode=require&connect_timeout=30&target_session_attrs=read-write"
     else:
-        DB_CONFIG = f"{DATABASE_URL_POOLED}?sslmode=require&connect_timeout=30"
+        DB_CONFIG = f"{DATABASE_URL_POOLED}?sslmode=require&connect_timeout=30&target_session_attrs=read-write"
 elif DATABASE_URL:
     # Usar conexión directa como fallback
     if '?' in DATABASE_URL:
-        DB_CONFIG = f"{DATABASE_URL}&sslmode=require&connect_timeout=30"
+        DB_CONFIG = f"{DATABASE_URL}&sslmode=require&connect_timeout=30&target_session_attrs=read-write"
     else:
-        DB_CONFIG = f"{DATABASE_URL}?sslmode=require&connect_timeout=30"
+        DB_CONFIG = f"{DATABASE_URL}?sslmode=require&connect_timeout=30&target_session_attrs=read-write"
 else:
     # Usar configuración individual
     DB_CONFIG = {
